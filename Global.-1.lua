@@ -1,13 +1,13 @@
 function onload()
     getObject()
-    createButton(setupButton, setupButtonToBe, "setup", "setup")
-    createButton(testButton, testButtonToBe, "test", "test")
+    createPersonalButton(setupButton, setupButtonToBe, "setup", "setup")
+    createPersonalButton(testButton, testButtonToBe, "test", "test")
 end
 
-function createButton(buttonName, obejctName, onclickFunction, text)
+function createPersonalButton(buttonName, obejctName, onclickFunction, text)
     local buttonName = {}
-    buttonName.click_function = text
-    buttonName.fuction_owner = onclickFunction
+    buttonName.click_function = onclickFunction
+    buttonName.fuction_owner = obejctName
     buttonName.label = text
     buttonName.position = {0, 0.5, 0}
     buttonName.rotation = {0, 180, 0}
