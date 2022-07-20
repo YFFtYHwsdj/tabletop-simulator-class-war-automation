@@ -101,19 +101,19 @@ end
 
 function Deal_Policy_Cards(PolicyCards)
     for i = 1, 16, 1 do
-        if i == 1 or i % 4 == 1 then
+        if i % 4 == 1 then
             PolicyCards.takeObject({
                 position = {15.39, 2.49, 6.02},
                 rotation = {0.02, 179.99, 180.08}
             })
         else
-            if i == 2 or i % 4 == 2 then
+            if i % 4 == 2 then
                 PolicyCards.takeObject({
                     position = {17.98, 2.49, 6.04},
                     rotation = {0.02, 179.99, 180.08}
                 })
             else
-                if i == 3 or i % 4 == 3 then
+                if i % 4 == 3 then
                     PolicyCards.takeObject({
                         position = {17.95, 2.49, 2.62},
                         rotation = {0.02, 179.55, 180.08}
