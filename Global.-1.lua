@@ -17,7 +17,7 @@ function createButton(buttonName, obejctName, onclickFunction, text)
 end
 
 function test()
-    print(findHitsInRadius({15.39, 3, 6.02}, 0.8).hit_object)
+    print(findHitsInRadius({15.39, 4, 6.02}, 5).hit_object)
 end
 
 function findHitsInRadius(pos, radius)
@@ -25,7 +25,7 @@ function findHitsInRadius(pos, radius)
     local hitList = Physics.cast({
         origin = pos,
         type = 2,
-        direction = {0,1,0},
+        direction = {0,-5,0},
         size = {radius, radius, radius},
         max_distance = 1,
         debug = true
@@ -86,6 +86,7 @@ end
 function policySetup1()
     split_Policy_Cards_Era_1 = Policy_Cards_Era_1.split(2)
     Policy_Cards_Crisis.shuffle()
+    Policy_Cards_Crisis.shuffle()
     Spread_Policy_Cards_Crisis = Policy_Cards_Crisis.spread()
 end
 
@@ -107,7 +108,7 @@ function policySetup2()
 end
 
 function Deal_Policy_Cards(PolicyCards)
-    for i = 1, 16, 1 do
+    for i = 16, 1, -1 do
         if i % 4 == 1 then
             PolicyCards.takeObject({
                 position = {15.39, 2.49, 6.02},
