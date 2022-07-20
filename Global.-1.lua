@@ -17,18 +17,17 @@ function createButton(buttonName, obejctName, onclickFunction, text)
 end
 
 function test()
-    print(findHitsInRadius({15.39, 2.56, 6.02},0.1))
+    print(findHitsInRadius({15.39, 3, 6.02}, 0.8).hit_object)
 end
 
 function findHitsInRadius(pos, radius)
     local radius = (radius or 1)
     local hitList = Physics.cast({
-        origin       = pos,
-        direction    = {0,1,0},
-        type         = 2,
-        size         = {radius,radius,radius},
-        max_distance = 0,
-        debug        = true,
+        origin = pos,
+        type = 2,
+        size = {radius, radius, radius},
+        max_distance = 1,
+        debug = true
     })
 
     return hitList
@@ -40,6 +39,7 @@ function getObject()
     Policy_Cards_Era_3 = getObjectFromGUID("c7cc01")
     Policy_Cards_Crisis = getObjectFromGUID("ae7a79")
     Party_Deck = getObjectFromGUID("d9249a")
+    Charactor_Deck = getObjectFromGUID("0b4e97")
     Commodity_Deck = getObjectFromGUID("538e5a")
     Prime_Debt_Deck = getObjectFromGUID("1f3f48")
     Subprime_Debt_Deck = getObjectFromGUID("3538d0")
@@ -52,15 +52,19 @@ function getObject()
 end
 
 function setup()
+
     policySetup1()
     Wait.frames(policySetup2, 1)
 
-    flipAndShuffle(Party_Deck)
+    Party_Deck.shuffle()
+    Charactor_Deck.shuffle()
     flipAndShuffle(Commodity_Deck)
     flipAndShuffle(Prime_Debt_Deck)
     flipAndShuffle(Subprime_Debt_Deck)
 
     colonySetup()
+
+    destroyObject(setupButtonToBe)
 end
 
 function flipAndShuffle(Deck)
@@ -84,10 +88,10 @@ end
 
 function policySetup2()
     Spread_Policy_Cards_Crisis[1].flip()
-    split_Policy_Cards_Era_1[1].putObject(Spread_Policy_Cards_Crisis[1])
     Spread_Policy_Cards_Crisis[2].flip()
-    Policy_Cards_Era_2.putObject(Spread_Policy_Cards_Crisis[2])
     Spread_Policy_Cards_Crisis[3].flip()
+    split_Policy_Cards_Era_1[1].putObject(Spread_Policy_Cards_Crisis[1])
+    Policy_Cards_Era_2.putObject(Spread_Policy_Cards_Crisis[2])
     Policy_Cards_Era_3.putObject(Spread_Policy_Cards_Crisis[3])
     split_Policy_Cards_Era_1[1].shuffle()
     split_Policy_Cards_Era_1[2].shuffle()
