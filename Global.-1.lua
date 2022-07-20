@@ -101,14 +101,14 @@ function policySetup2()
     split_Policy_Cards_Era_1[2].shuffle()
     Policy_Cards_Era_2.shuffle()
     Policy_Cards_Era_3.shuffle()
-    split_Policy_Cards_Era_1[1].putObject(split_Policy_Cards_Era_1[2])
+    split_Policy_Cards_Era_1[2].putObject(split_Policy_Cards_Era_1[1])
     Deal_Policy_Cards(Policy_Cards_Era_3)
     Deal_Policy_Cards(Policy_Cards_Era_2)
-    Deal_Policy_Cards(split_Policy_Cards_Era_1[1])
+    Deal_Policy_Cards(split_Policy_Cards_Era_1[2])
 end
 
 function Deal_Policy_Cards(PolicyCards)
-    for i = 16, 1, -1 do
+    for i = 1,16,1 do
         if i % 4 == 1 then
             PolicyCards.takeObject({
                 position = {15.39, 2.49, 6.02},
