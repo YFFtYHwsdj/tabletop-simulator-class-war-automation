@@ -25,6 +25,7 @@ function findHitsInRadius(pos, radius)
     local hitList = Physics.cast({
         origin = pos,
         type = 2,
+        direction = {0,1,0},
         size = {radius, radius, radius},
         max_distance = 1,
         debug = true
@@ -41,6 +42,7 @@ function getObject()
     Party_Deck = getObjectFromGUID("d9249a")
     Charactor_Deck = getObjectFromGUID("0b4e97")
     Commodity_Deck = getObjectFromGUID("538e5a")
+    Innovation_Deck = getObjectFromGUID("d326fa")
     Prime_Debt_Deck = getObjectFromGUID("1f3f48")
     Subprime_Debt_Deck = getObjectFromGUID("3538d0")
     ColonyCrisis = getObjectFromGUID("48ecea")
@@ -58,6 +60,7 @@ function setup()
 
     Party_Deck.shuffle()
     Charactor_Deck.shuffle()
+    flipAndShuffle(Innovation_Deck)
     flipAndShuffle(Commodity_Deck)
     flipAndShuffle(Prime_Debt_Deck)
     flipAndShuffle(Subprime_Debt_Deck)
