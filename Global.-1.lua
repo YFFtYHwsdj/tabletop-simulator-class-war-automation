@@ -37,6 +37,8 @@ function getObject()
     Class_Conciousness_Spinner = getObjectFromGUID("1e9206")
     Innovation_Dice = getObjectFromGUID("4fbf0b")
     Innovation_Spinner = getObjectFromGUID("c453d0")
+    RedMelee_Bag = getObjectFromGUID("731116")
+    NeuralMelee_Bag = getObjectFromGUID("452b4b")
 
     setupButtonToBe = getObjectFromGUID("66a0bc")
     testButtonToBe = getObjectFromGUID("507453")
@@ -81,7 +83,7 @@ function initialization()
     createPersonalButton(ClassMinusButton, ClassMinusButtonTobe, "ClassMinus", "-1")
     createPersonalButton(InnovationPlusButton, InnovationPlusButtonTobe, "InnovationPlus", "+1")
     createPersonalButton(InnovationMinusButton, InnovationMinusButtonTobe, "InnovationMinus", "-1")
-    createPersonalButton(calReproductionButton,calReproductionButtonToBe,"calReproduction","繁育结算")
+    createPersonalButton(calReproductionButton, calReproductionButtonToBe, "calReproduction", "繁育结算")
     Policy_Deck_Empty = false
     Phases = 2
     GreatDpression = false
@@ -102,44 +104,270 @@ function initialization()
     OriginSlot10 = {-11.37, 2.52, -6.01}
 end
 
+function checkForPolicyCard(CardName)
+    local returnBool = false
+    local hitList = Physics.cast({
+        origin = {25.81, 3, 1.61},
+        size = {6, 2, 15.4},
+        direction = {0, -1, 0},
+        max_distance = 5,
+        type = 3,
+        debug = true
+    })
+    for i = 1, #hitList do
+        if hitList[i].hit_object.getName() == CardName then
+            returnBool = true
+            break
+        end
+    end
+end
+
 function calReproduction()
+    local death = 0
+    
     TaxSurplus = 0
-    TaxSurplus = 0
+    WageSurplus = 0
     RentSurplus = 0
+
     calWageSurplus()
     calTaxSurplus()
     calRentSurplus()
+
+    calClergyNunmbers()
+    calNobilityNunmbers()
+
+    if nobleNum <= RentSurplus then
+        RentSurplus = RentSurplus - nobleNum
+    else
+        nobleNum = RentSurplus
+        RentSurplus = 0
+    end
+
+    setRentSurplus(RentSurplus)
+    setNoble(nobleNum)
+
+    workerNumber = calculateWorkers()
+
+    if workerNumber <= WageSurplus then
+        WageSurplus = WageSurplus - workerNumber
+        setWageSurplus(WageSurplus)
+        setWorkers(workerNumber + 2)
+        print("本次繁育阶段，没有一个工人饿死。")
+    else
+        if checkForPolicyCard("福利国家") then
+            if TaxSurplus + WageSurplus >= workerNumber  then
+                WageSurplus = 0
+                setWageSurplus(WageSurplus)
+                TaxSurplus = TaxSurplus - WageSurplus - workerNumber
+                setTaxSurplus(TaxSurplus)
+                setWorkers(workerNumber + 2)
+            else
+                death = workerNumber - TaxSurplus - WageSurplus
+                WageSurplus = 0
+                setWageSurplus(WageSurplus)
+                TaxSurplus = 0
+                setTaxSurplus(TaxSurplus)
+                setWorkers(workerNumber - death + 1)
+                print("本次繁育阶段中，共计",death,"个工人棋子死亡，请移除",death - 1,"个棋子。")
+            end
+        else
+            death = workerNumber - WageSurplus
+            WageSurplus = 0
+            setWageSurplus(WageSurplus)
+            setWorkers(workerNumber - death + 1)
+            print("本次繁育阶段中，共计",death,"个工人棋子死亡。")
+        end
+    end 
+end
+
+function calClergyNunmbers()
+    hitClergy = return_hit_Clergy_Zone()
+    redClergy = 0
+    neutralClergy = 0
+    for i = 1, #hitClergy, 1 do
+        if hitClergy[i].hit_object.type == "Figurine" then
+            if hitClergy[i].hit_object.getName() == "红色棋子" then
+                redClergy = redClergy + 1
+            else
+                neutralClergy = neutralClergy + 1
+            end
+        end
+    end
+end
+
+function calNobilityNunmbers()
+    hitNobility = return_hit_Nobility_Zone()
+    nobleNum = 0
+    for i = 1, #hitNobility, 1 do
+        if hitNobility[i].hit_object.type == "Figurine" then
+            nobleNum = nobleNum + 1
+        end
+    end
+end
+
+function setNoble(Numbers)
+    local gap = 0
+    if nobleNum < Numbers then
+        for i=1,#hitNobility do
+            if hitNobility[i].hit_object.type == "Figurine" then
+                destroyObject(hitNobility[i].hit_object)
+            end
+        end
+        for i=0,Numbers do
+            NeuralMelee_Bag.takeObject({
+                position = {0.80+gap, 2.50, 1.00}
+            })
+            gap = gap + 0.6
+        end
+    end
+end
+
+
+
+function setWorkers(Numbers)
+    local RedWorkers = 0
+    local NeutralWokers = 0
+    local gap = 0.8
+    for i=1,#WorkerZone do
+        if WorkerZone[i].hit_object.getName() == "红色棋子" or WorkerZone[i].hit_object.getName() == "黑色棋子" then
+            destroyObject(WorkerZone[i].hit_object)
+        end
+    end
+    for i=1,#WorkerZone do
+        if WorkerZone[i].hit_object.getName() == "红色棋子" then
+            RedWorkers = RedWorkers + 1
+        else
+            if WorkerZone[i].hit_object.getName() == "黑色棋子" then
+                NeutralWokers = NeutralWokers + 1
+            end            
+        end
+    end
+    if Numbers >= RedWorkers + NeutralWokers then
+        for i=1,RedWorkers do
+            RedMelee_Bag.takeObject({
+                position = {-7.32+gap, 2.51, -6.94},
+                smooth = false
+            })
+            gap = gap + 0.8
+        end
+        for i=1,Numbers - RedWorkers do
+            NeuralMelee_Bag.takeObject({
+                position = {-7.32+gap, 2.51, -6.94},
+                smooth = false
+            })
+            gap = gap + 0.8
+        end
+    end
+    if Numbers < RedWorkers + NeutralWokers then
+        if Numbers <= RedWorkers then
+            for i=1,Numbers do
+                RedMelee_Bag.takeObject({
+                    position = {-7.32+gap, 2.51, -6.94},
+                    smooth = false
+                })
+                gap = gap + 0.8
+            end
+        else
+            for i=1,RedWorkers do
+                RedMelee_Bag.takeObject({
+                    position = {-7.32+gap, 2.51, -6.94},
+                    smooth = false
+                })
+                gap = gap + 0.8
+            end
+            for i=1,Numbers - RedWorkers do
+                NeuralMelee_Bag.takeObject({
+                    position = {-7.32+gap, 2.51, -6.94},
+                    smooth = false
+                })
+                gap = gap + 0.8
+            end
+        end
+    end
+end
+
+function setWageSurplus(WageSurplus)
+    for i = 1, #WageHit do
+        if WageHit[i].hit_object.getName() == "₽" or WageHit[i].hit_object.getName() == "x5₽" then
+            destroyObject(WageHit[i].hit_object)
+        end
+    end
+    for i = 0, WageSurplus do
+        ResourcesBag.takeObject({
+            position = {10.07, 2.48, -6.35},
+            smooth = false
+        })
+    end
+end
+
+function setTaxSurplus(TaxSurplus)
+    for i = 1, #TaxHit do
+        if TaxHit[i].hit_object.getName() == "₽" or TaxHit[i].hit_object.getName() == "x5₽" then
+            destroyObject(TaxHit[i].hit_object)
+        end
+    end
+    for i = 0, TaxSurplus do
+        ResourcesBag.takeObject({
+            position = {7.70, 2.48, -2.87},
+            smooth = false
+        })
+    end
+end
+
+function setRentSurplus(RentSurplus)
+    for i = 1, #RentHit do
+        if RentHit[i].hit_object.getName() == "₽" or RentHit[i].hit_object.getName() == "x5₽" then
+            destroyObject(RentHit[i].hit_object)
+        end
+    end
+    for i = 0, RentSurplus do
+        ResourcesBag.takeObject({
+            position = {5.68, 2.49, 1.10},
+            smooth = false
+        })
+    end
+end
+
+function calculateWorkers()
+    WorkerZone = return_hit_Workers_Zone()
+    local workerNumber = 0
+    for i = 1, #WorkerZone do
+        if WorkerZone[i].hit_object.type == "Figurine" then
+            workerNumber = workerNumber + 1
+        end
+    end
+    return workerNumber
 end
 
 function calTaxSurplus()
-    local hitList = Physics.cast({
+    TaxHit = Physics.cast({
         origin = {9.08, 2.48, -1.93},
-        direction = {0,-1,0},
+        direction = {0, -1, 0},
         max_distance = 8,
         type = 3,
-        size = {7.5,1,3.8},
+        size = {7.5, 1, 3.8},
         debug = false
     })
     local n = 1
     local TaxList = {}
-    
-    for i=1,#hitList,1 do
-        if hitList[i].hit_object.getName() == "₽" or hitList[i].hit_object.getName() == "x5₽" then
-            TaxList[n] = hitList[i].hit_object
+
+    for i = 1, #TaxHit, 1 do
+        if TaxHit[i].hit_object.getName() == "₽" or TaxHit[i].hit_object.getName() == "x5₽" then
+            TaxList[n] = TaxHit[i].hit_object
             n = n + 1
         end
     end
-    for i=1,#TaxList do
+    for i = 1, #TaxList do
         if TaxList[i].getName() == "₽" then
-            if inRange(TaxList[i].mass,0.925,0.001) then
+            if inRange(TaxList[i].mass, 0.925, 0.001) then
                 TaxSurplus = TaxSurplus + 1
             else
-                if inRange(TaxList[i].mass,1.05,0.001) then
+                if inRange(TaxList[i].mass, 1.05, 0.001) then
                     TaxSurplus = TaxSurplus + 2
                 else
-                    local temp = (TaxList[i].mass - 1.05)/0.025+2
+                    local temp = (TaxList[i].mass - 1.05) / 0.025 + 2
                     local tempTo = math.ceil(temp)
-                    if inRange(temp,tempTo,0.1)then
+                    if inRange(temp, tempTo, 0.1) then
                         temp = tempTo
                     else
                         temp = math.floor(temp)
@@ -154,34 +382,34 @@ function calTaxSurplus()
 end
 
 function calRentSurplus()
-    local hitList = Physics.cast({
+    RentHit = Physics.cast({
         origin = {8.02, 2.49, 1.97},
-        direction = {0,-1,0},
+        direction = {0, -1, 0},
         max_distance = 8,
         type = 3,
-        size = {10,1,3.8},
+        size = {10, 1, 3.8},
         debug = false
     })
     local n = 1
     local RentList = {}
-    
-    for i=1,#hitList,1 do
-        if hitList[i].hit_object.getName() == "₽" or hitList[i].hit_object.getName() == "x5₽" then
-            RentList[n] = hitList[i].hit_object
+
+    for i = 1, #RentHit, 1 do
+        if RentHit[i].hit_object.getName() == "₽" or RentHit[i].hit_object.getName() == "x5₽" then
+            RentList[n] = RentHit[i].hit_object
             n = n + 1
         end
     end
-    for i=1,#RentList do
+    for i = 1, #RentList do
         if RentList[i].getName() == "₽" then
-            if inRange(RentList[i].mass,0.925,0.001) then
+            if inRange(RentList[i].mass, 0.925, 0.001) then
                 RentSurplus = RentSurplus + 1
             else
-                if inRange(RentList[i].mass,1.05,0.001) then
+                if inRange(RentList[i].mass, 1.05, 0.001) then
                     RentSurplus = RentSurplus + 2
                 else
-                    local temp = (RentList[i].mass - 1.05)/0.025+2
+                    local temp = (RentList[i].mass - 1.05) / 0.025 + 2
                     local tempTo = math.ceil(temp)
-                    if inRange(temp,tempTo,0.1)then
+                    if inRange(temp, tempTo, 0.1) then
                         temp = tempTo
                     else
                         temp = math.floor(temp)
@@ -196,34 +424,34 @@ function calRentSurplus()
 end
 
 function calWageSurplus()
-    local hitList = Physics.cast({
+    WageHit = Physics.cast({
         origin = {10.60, 5, -5.93},
-        direction = {0,-1,0},
+        direction = {0, -1, 0},
         max_distance = 8,
         type = 3,
-        size = {5.5,1,3.8},
+        size = {5.5, 1, 3.8},
         debug = false
     })
     local n = 1
     local WageList = {}
-    
-    for i=1,#hitList,1 do
-        if hitList[i].hit_object.getName() == "₽" or hitList[i].hit_object.getName() == "x5₽" then
-            WageList[n] = hitList[i].hit_object
+
+    for i = 1, #WageHit, 1 do
+        if WageHit[i].hit_object.getName() == "₽" or WageHit[i].hit_object.getName() == "x5₽" then
+            WageList[n] = WageHit[i].hit_object
             n = n + 1
         end
     end
-    for i=1,#WageList do
+    for i = 1, #WageList do
         if WageList[i].getName() == "₽" then
-            if inRange(WageList[i].mass,0.925,0.001) then
+            if inRange(WageList[i].mass, 0.925, 0.001) then
                 WageSurplus = WageSurplus + 1
             else
-                if inRange(WageList[i].mass,1.05,0.001) then
+                if inRange(WageList[i].mass, 1.05, 0.001) then
                     WageSurplus = WageSurplus + 2
                 else
-                    local temp = (WageList[i].mass - 1.05)/0.025+2
+                    local temp = (WageList[i].mass - 1.05) / 0.025 + 2
                     local tempTo = math.ceil(temp)
-                    if inRange(temp,tempTo,0.1)then
+                    if inRange(temp, tempTo, 0.1) then
                         temp = tempTo
                     else
                         temp = math.floor(temp)
@@ -237,9 +465,9 @@ function calWageSurplus()
     end
 end
 
-function inRange(compared,to,range)
+function inRange(compared, to, range)
     local returnBool = false
-    if compared < to +range and compared > to - range then
+    if compared < to + range and compared > to - range then
         returnBool = true
     end
     return returnBool
@@ -247,19 +475,12 @@ end
 
 function calculateMelleAction()
     calculateSolidarity()
-    calcualateClergy()
-    calcualateIntelligentsia()
+    calculateClergy()
+    calculateIntelligentsia()
 end
 
-function calcualateIntelligentsia()
-    local hitList = Physics.cast({
-        origin = {-4.45, 4.00, -2.18},
-        size = {4.2, 1, 3.8},
-        type = 3,
-        direction = {0, -1, 0},
-        max_distance = 5,
-        debug = true
-    })
+function calculateIntelligentsia()
+    local hitList = return_hit_Intel_Zone()
     local InnovationAdd = 0
     local CC_add = 0
 
@@ -296,7 +517,6 @@ end
 
 function checkForInnovation()
     local rotationValue = math.random(8)
-    print(rotationValue)
     Innovation_Dice.setRotationValue(rotationValue)
     if Innovation_Value >= rotationValue then
         Innovation_Deck.takeObject({
@@ -333,15 +553,8 @@ function setInnovationSpinner(value)
     end
 end
 
-function calcualateClergy()
-    local hitClergy = Physics.cast({
-        origin = {-2.425, 3.99, 2},
-        direction = {0, -1, 0},
-        max_distance = 6,
-        type = 3,
-        size = {4.59, 0.1, 4},
-        debug = false
-    })
+function calculateClergy()
+    local hitClergy = return_hit_Clergy_Zone()
     local redClergy = 0
     local neutralClergy = 0
     for i = 1, #hitClergy, 1 do
@@ -383,7 +596,7 @@ function setClassSpinner(value)
     end
 end
 
-function calculateSolidarity()
+function return_hit_Workers_Zone()
     local hitWorkers = Physics.cast({
         origin = {-0.02, 3.99, -6.10},
         direction = {0, -1, 0},
@@ -392,6 +605,71 @@ function calculateSolidarity()
         size = {18.5, 0.1, 3.9},
         debug = false
     })
+    return hitWorkers
+end
+
+function return_hit_Intel_Zone()
+    local hitPeople = Physics.cast({
+        origin = {-4.67, 2.50, -1.97},
+        direction = {0, -1, 0},
+        max_distance = 6,
+        type = 3,
+        size = {4, 0.1, 3.7},
+        debug = false
+    })
+    return hitPeople
+end
+
+function return_hit_Soliders_Zone()
+    local hitPeople = Physics.cast({
+        origin = {-0.01, 2.50, -2.03},
+        direction = {0, -1, 0},
+        max_distance = 6,
+        type = 3,
+        size = {2.7, 0.1, 3.7},
+        debug = false
+    })
+    return hitPeople
+end
+
+function return_hit_Beura_Zone()
+    local hitPeople = Physics.cast({
+        origin = {4.66, 2.49, -2.04},
+        direction = {0, -1, 0},
+        max_distance = 6,
+        type = 3,
+        size = {4, 0.1, 3.7},
+        debug = false
+    })
+    return hitPeople
+end
+
+function return_hit_Clergy_Zone()
+    local hitPeople = Physics.cast({
+        origin = {-2.23, 2.50, 1.93},
+        direction = {0, -1, 0},
+        max_distance = 6,
+        type = 3,
+        size = {4, 0.1, 3.7},
+        debug = false
+    })
+    return hitPeople
+end
+
+function return_hit_Nobility_Zone()
+    local hitPeople = Physics.cast({
+        origin = {2.29, 2.50, 1.91},
+        direction = {0, -1, 0},
+        max_distance = 6,
+        type = 3,
+        size = {4, 0.1, 3.7},
+        debug = false
+    })
+    return hitPeople
+end
+
+function calculateSolidarity()
+    local hitWorkers = return_hit_Workers_Zone()
     local redWorkers = 0
     for i = 1, #hitWorkers, 1 do
         if hitWorkers[i].hit_object.type == "Figurine" then
@@ -538,62 +816,50 @@ function calculateProduction(origin)
     end
     -- 计算围栏产出
     if fence == true then
-        if strike > 0 then
-            print("位于土地格", LandSlot, "的围栏由于罢工无法运行。")
+        if worker > 1 then
+            print("位于土地格", LandSlot, "的围栏人数过多，请检查并手动计算。")
         else
-            if worker > 1 then
-                print("位于土地格", LandSlot, "的围栏人数过多，请检查并手动计算。")
-            else
-                if worker + automation == 1 then
-                    if GreatDpression == true then
-                        Earn = 2
-                    else
-                        Earn = 3
-                    end
+            if worker + automation == 1 then
+                if GreatDpression == true then
+                    Earn = 2
                 else
-                    if worker < 1 then
-                        print("位于土地格", LandSlot, "的围栏人数不足，请检查并手动计算。")
-                    end
+                    Earn = 3
+                end
+            else
+                if worker < 1 then
+                    print("位于土地格", LandSlot, "的围栏人数不足，请检查并手动计算。")
                 end
             end
         end
     end
     -- 计算工厂产出
     if factory == true then
-        if strike > 0 then
-            print("位于土地格", LandSlot, "的工厂由于罢工无法运行。")
+        if worker + automation > 3 then
+            print("位于土地格", LandSlot, "的工厂人数过多，请检查并手动计算。")
         else
-            if worker + automation > 3 then
-                print("位于土地格", LandSlot, "的工厂人数过多，请检查并手动计算。")
-            else
-                if worker + automation == 3 then
-                    if GreatDpression == true then
-                        Earn = 6
-                    else
-                        Earn = 7
-                    end
+            if worker + automation == 3 then
+                if GreatDpression == true then
+                    Earn = 6
                 else
-                    if worker + automation < 3 then
-                        print("位于土地格", LandSlot, "的工厂人数不足，请检查并手动计算。")
-                    end
+                    Earn = 7
+                end
+            else
+                if worker + automation < 3 then
+                    print("位于土地格", LandSlot, "的工厂人数不足，请检查并手动计算。")
                 end
             end
         end
     end
     -- 计算作坊产出
     if mill == true then
-        if strike > 0 then
-            print("位于土地格", LandSlot, "的作坊由于罢工无法运行。")
+        if worker + automation > 2 then
+            print("位于土地格", LandSlot, "的作坊人数过多，请检查并手动计算。")
         else
-            if worker + automation > 2 then
-                print("位于土地格", LandSlot, "的作坊人数过多，请检查并手动计算。")
-            else
-                if worker + automation == 2 then
-                    if GreatDpression == true then
-                        Earn = 5
-                    else
-                        Earn = 6
-                    end
+            if worker + automation == 2 then
+                if GreatDpression == true then
+                    Earn = 5
+                else
+                    Earn = 6
                 end
             end
         end
