@@ -1,17 +1,60 @@
 function onload()
     initialization()
-    --setMutiNames("f7c567","公社",3)
-    --setMutiNames("94624a","研究实验室",3)
+    -- setMutiNames("f7c567","公社",3)
+    -- setMutiNames("94624a","研究实验室",3)
+    -- print(getObjectFromGUID("d5fa63").getColorTint())
+    -- print(getObjectFromGUID("0f6128").getColorTint())
 end
 
-function setMutiNames(guid,Name,CardNumbers)
+function setMutiNames(guid, Name, CardNumbers)
     local setItems = getObjectFromGUID(guid)
     local originalPosition = setItems.getPosition()
     local spreadItems = setItems.spread()
-    for i=1,CardNumbers,1 do
+    for i = 1, CardNumbers, 1 do
         spreadItems[i].setName(Name)
         spreadItems[i].setPosition(originalPosition)
     end
+end
+
+function getObject()
+    Policy_Cards_Era_1 = getObjectFromGUID("5d498b")
+    Policy_Cards_Era_2 = getObjectFromGUID("5a70b5")
+    Policy_Cards_Era_3 = getObjectFromGUID("aa9449")
+    Policy_Cards_Crisis = getObjectFromGUID("431a3f")
+    Red_Charactor_Deck = getObjectFromGUID("1aa22c")
+    Charactor_Deck = getObjectFromGUID("f1cf9b")
+    Commodity_Deck = getObjectFromGUID("34e9f6")
+    Innovation_Deck = getObjectFromGUID("369161")
+    Prime_Debt_Deck = getObjectFromGUID("16a2cb")
+    Subprime_Debt_Deck = getObjectFromGUID("9571c5")
+    ColonyCrisis = getObjectFromGUID("5ae390")
+    colonyA = getObjectFromGUID("37730a")
+    colonyB = getObjectFromGUID("df262f")
+    colonyC = getObjectFromGUID("88e0f3")
+    Crisis_Card_Great_Depression = getObjectFromGUID("4c6eaf")
+    Party_Deck = getObjectFromGUID("8fb984")
+    Solidarity_Dice = getObjectFromGUID("365b93")
+    Class_Conciousness_Spinner = getObjectFromGUID("1e9206")
+    Innovation_Dice = getObjectFromGUID("4fbf0b")
+    Innovation_Spinner = getObjectFromGUID("c453d0")
+
+    setupButtonToBe = getObjectFromGUID("66a0bc")
+    testButtonToBe = getObjectFromGUID("507453")
+    calProductionButtonToBe = getObjectFromGUID("d5d57a")
+    calMeleeActionButtonToBe = getObjectFromGUID("de1245")
+    ClassPlusButtonTobe = getObjectFromGUID("ce4b9f")
+    ClassMinusButtonTobe = getObjectFromGUID("6c790d")
+    InnovationPlusButtonTobe = getObjectFromGUID("2dee80")
+    InnovationMinusButtonTobe = getObjectFromGUID("396af4")
+    calReproductionButtonToBe = getObjectFromGUID("adbaa3")
+
+    flipPolicyDecksButtonToBe = getObjectFromGUID("d32217")
+    customBoard = getObjectFromGUID("541194")
+    PhaseMarker = getObjectFromGUID("ed95e3")
+    nextPhaseButtonToBe = getObjectFromGUID("17a99e")
+
+    ResourcesBag = getObjectFromGUID("6a37ad")
+
 end
 
 function createPersonalButton(buttonName, obejctName, onclickFunction, text)
@@ -33,10 +76,19 @@ function initialization()
     createPersonalButton(flipPolicyDecksButton, flipPolicyDecksButtonToBe, "flipPolicyDecks", "翻面")
     createPersonalButton(nextPhaseButton, nextPhaseButtonToBe, "setPhaseMarker", "下一阶段")
     createPersonalButton(calProductionButton, calProductionButtonToBe, "calProduction", "结算生产")
+    createPersonalButton(calMeleeActionButton, calMeleeActionButtonToBe, "calculateMelleAction", "棋子行动")
+    createPersonalButton(ClassPlusButton, ClassPlusButtonTobe, "ClassPlus", "+1")
+    createPersonalButton(ClassMinusButton, ClassMinusButtonTobe, "ClassMinus", "-1")
+    createPersonalButton(InnovationPlusButton, InnovationPlusButtonTobe, "InnovationPlus", "+1")
+    createPersonalButton(InnovationMinusButton, InnovationMinusButtonTobe, "InnovationMinus", "-1")
+    createPersonalButton(calReproductionButton,calReproductionButtonToBe,"calReproduction","繁育结算")
     Policy_Deck_Empty = false
     Phases = 2
     GreatDpression = false
     Size_of_Card = {2.16, 0.05, 3.10}
+
+    Class_Conciousness_Value = 0
+    Innovation_Value = 0
 
     OriginSlot1 = {-11.32, 2.53, 6.01}
     OriginSlot2 = {-8.90, 2.52, 6.04}
@@ -50,11 +102,317 @@ function initialization()
     OriginSlot10 = {-11.37, 2.52, -6.01}
 end
 
-function test()
-
+function calReproduction()
+    TaxSurplus = 0
+    TaxSurplus = 0
+    RentSurplus = 0
+    calWageSurplus()
+    calTaxSurplus()
+    calRentSurplus()
 end
 
+function calTaxSurplus()
+    local hitList = Physics.cast({
+        origin = {9.08, 2.48, -1.93},
+        direction = {0,-1,0},
+        max_distance = 8,
+        type = 3,
+        size = {7.5,1,3.8},
+        debug = false
+    })
+    local n = 1
+    local TaxList = {}
+    
+    for i=1,#hitList,1 do
+        if hitList[i].hit_object.getName() == "₽" or hitList[i].hit_object.getName() == "x5₽" then
+            TaxList[n] = hitList[i].hit_object
+            n = n + 1
+        end
+    end
+    for i=1,#TaxList do
+        if TaxList[i].getName() == "₽" then
+            if inRange(TaxList[i].mass,0.925,0.001) then
+                TaxSurplus = TaxSurplus + 1
+            else
+                if inRange(TaxList[i].mass,1.05,0.001) then
+                    TaxSurplus = TaxSurplus + 2
+                else
+                    local temp = (TaxList[i].mass - 1.05)/0.025+2
+                    local tempTo = math.ceil(temp)
+                    if inRange(temp,tempTo,0.1)then
+                        temp = tempTo
+                    else
+                        temp = math.floor(temp)
+                    end
+                    TaxSurplus = TaxSurplus + temp
+                end
+            end
+        else
+            TaxSurplus = TaxSurplus + 5
+        end
+    end
+end
 
+function calRentSurplus()
+    local hitList = Physics.cast({
+        origin = {8.02, 2.49, 1.97},
+        direction = {0,-1,0},
+        max_distance = 8,
+        type = 3,
+        size = {10,1,3.8},
+        debug = false
+    })
+    local n = 1
+    local RentList = {}
+    
+    for i=1,#hitList,1 do
+        if hitList[i].hit_object.getName() == "₽" or hitList[i].hit_object.getName() == "x5₽" then
+            RentList[n] = hitList[i].hit_object
+            n = n + 1
+        end
+    end
+    for i=1,#RentList do
+        if RentList[i].getName() == "₽" then
+            if inRange(RentList[i].mass,0.925,0.001) then
+                RentSurplus = RentSurplus + 1
+            else
+                if inRange(RentList[i].mass,1.05,0.001) then
+                    RentSurplus = RentSurplus + 2
+                else
+                    local temp = (RentList[i].mass - 1.05)/0.025+2
+                    local tempTo = math.ceil(temp)
+                    if inRange(temp,tempTo,0.1)then
+                        temp = tempTo
+                    else
+                        temp = math.floor(temp)
+                    end
+                    RentSurplus = RentSurplus + temp
+                end
+            end
+        else
+            RentSurplus = RentSurplus + 5
+        end
+    end
+end
+
+function calWageSurplus()
+    local hitList = Physics.cast({
+        origin = {10.60, 5, -5.93},
+        direction = {0,-1,0},
+        max_distance = 8,
+        type = 3,
+        size = {5.5,1,3.8},
+        debug = false
+    })
+    local n = 1
+    local WageList = {}
+    
+    for i=1,#hitList,1 do
+        if hitList[i].hit_object.getName() == "₽" or hitList[i].hit_object.getName() == "x5₽" then
+            WageList[n] = hitList[i].hit_object
+            n = n + 1
+        end
+    end
+    for i=1,#WageList do
+        if WageList[i].getName() == "₽" then
+            if inRange(WageList[i].mass,0.925,0.001) then
+                WageSurplus = WageSurplus + 1
+            else
+                if inRange(WageList[i].mass,1.05,0.001) then
+                    WageSurplus = WageSurplus + 2
+                else
+                    local temp = (WageList[i].mass - 1.05)/0.025+2
+                    local tempTo = math.ceil(temp)
+                    if inRange(temp,tempTo,0.1)then
+                        temp = tempTo
+                    else
+                        temp = math.floor(temp)
+                    end
+                    WageSurplus = WageSurplus + temp
+                end
+            end
+        else
+            WageSurplus = WageSurplus + 5
+        end
+    end
+end
+
+function inRange(compared,to,range)
+    local returnBool = false
+    if compared < to +range and compared > to - range then
+        returnBool = true
+    end
+    return returnBool
+end
+
+function calculateMelleAction()
+    calculateSolidarity()
+    calcualateClergy()
+    calcualateIntelligentsia()
+end
+
+function calcualateIntelligentsia()
+    local hitList = Physics.cast({
+        origin = {-4.45, 4.00, -2.18},
+        size = {4.2, 1, 3.8},
+        type = 3,
+        direction = {0, -1, 0},
+        max_distance = 5,
+        debug = true
+    })
+    local InnovationAdd = 0
+    local CC_add = 0
+
+    for i = 1, #hitList, 1 do
+        if hitList[i].hit_object.getName() == "黑色棋子" then
+            InnovationAdd = InnovationAdd + 1
+        else
+            if hitList[i].hit_object.getName() == "红色棋子" then
+                CC_add = CC_add + 1
+            else
+                if hitList[i].hit_object.getName() == "紫色棋子" then
+                    CC_add = CC_add - 1
+                else
+                    if hitList[i].hit_object.getName() == "紫色棋子" then
+                        CC_add = CC_add - 1
+                    else
+                        if hitList[i].hit_object.getName() == "紫色棋子" then
+                            CC_add = CC_add - 1
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    Innovation_Value = Innovation_Value + InnovationAdd
+    setInnovationSpinner(Innovation_Value)
+
+    checkForInnovation()
+
+    Class_Conciousness_Value = Class_Conciousness_Value + CC_add
+    setClassSpinner(Class_Conciousness_Value)
+end
+
+function checkForInnovation()
+    local rotationValue = math.random(8)
+    print(rotationValue)
+    Innovation_Dice.setRotationValue(rotationValue)
+    if Innovation_Value >= rotationValue then
+        Innovation_Deck.takeObject({
+            position = {14.79, 5, 10.75},
+            flip = true
+        })
+        print("一张研究牌被翻开")
+        Innovation_Value = 0
+        setInnovationSpinner(0)
+    end
+end
+
+function InnovationPlus()
+    Innovation_Value = Innovation_Value + 1
+    setInnovationSpinner(Innovation_Value)
+end
+
+function InnovationMinus()
+    Innovation_Value = Innovation_Value - 1
+    setInnovationSpinner(Innovation_Value)
+end
+
+function setInnovationSpinner(value)
+    if value <= 0 then
+        Innovation_Spinner.setRotationValue(0)
+        Innovation_Value = 0
+    else
+        if value > 8 then
+            Innovation_Value = 8
+            Innovation_Spinner.setRotationValue(8)
+        else
+            Innovation_Spinner.setRotationValue(value)
+        end
+    end
+end
+
+function calcualateClergy()
+    local hitClergy = Physics.cast({
+        origin = {-2.425, 3.99, 2},
+        direction = {0, -1, 0},
+        max_distance = 6,
+        type = 3,
+        size = {4.59, 0.1, 4},
+        debug = false
+    })
+    local redClergy = 0
+    local neutralClergy = 0
+    for i = 1, #hitClergy, 1 do
+        if hitClergy[i].hit_object.type == "Figurine" then
+            if hitClergy[i].hit_object.getName() == "红色棋子" then
+                redClergy = redClergy + 1
+            else
+                neutralClergy = neutralClergy + 1
+            end
+        end
+    end
+
+    Class_Conciousness_Value = Class_Conciousness_Value + redClergy - neutralClergy
+
+    setClassSpinner(Class_Conciousness_Value)
+end
+
+function ClassPlus()
+    Class_Conciousness_Value = Class_Conciousness_Value + 1
+    setClassSpinner(Class_Conciousness_Value)
+end
+
+function ClassMinus()
+    Class_Conciousness_Value = Class_Conciousness_Value - 1
+    setClassSpinner(Class_Conciousness_Value)
+end
+
+function setClassSpinner(value)
+    if value <= 0 then
+        Class_Conciousness_Spinner.setRotationValue(9)
+        Class_Conciousness_Value = 0
+    else
+        if value > 8 then
+            Class_Conciousness_Value = 8
+            Class_Conciousness_Spinner.setRotationValue(8)
+        else
+            Class_Conciousness_Spinner.setRotationValue(value)
+        end
+    end
+end
+
+function calculateSolidarity()
+    local hitWorkers = Physics.cast({
+        origin = {-0.02, 3.99, -6.10},
+        direction = {0, -1, 0},
+        max_distance = 6,
+        type = 3,
+        size = {18.5, 0.1, 3.9},
+        debug = false
+    })
+    local redWorkers = 0
+    for i = 1, #hitWorkers, 1 do
+        if hitWorkers[i].hit_object.type == "Figurine" then
+            if hitWorkers[i].hit_object.getName() == "红色棋子" then
+                redWorkers = redWorkers + 1
+            end
+        end
+    end
+
+    local Solidarity_Value = Solidarity_Dice.getRotationValue()
+    Solidarity_Value = Solidarity_Value + redWorkers
+    while Solidarity_Value >= 8 and PartyCardsDealt < 10 do
+        Solidarity_Value = Solidarity_Value - 7
+        Party_Deck.deal(1, "Red")
+        PartyCardsDealt = PartyCardsDealt + 1
+    end
+    if PartyCardsDealt == 9 then
+        print("请手动抽出最后一张政党牌！")
+    end
+    Solidarity_Dice.setRotationValue(Solidarity_Value)
+end
 
 function calProduction()
     CommonsRent = 0
@@ -82,7 +440,7 @@ function calProduction()
         for i = 1, CommonsRent, 1 do
             ResourcesBag.takeObject({
                 position = {5.35, 2.49, 1.68},
-                smooth = true
+                smooth = false
             })
         end
         print("自给农场产生了", CommonsRent, "租金", "\n自给农场上的自给农消耗了", CommonsRent * 2,
@@ -95,14 +453,14 @@ function checkForDeppression()
     local TrueThisTime = false
     local hitTable = Physics.cast({
         origin = {-0.04, 3.09, 18.69},
-        direction = {0,-1,0},
+        direction = {0, -1, 0},
         max_distance = 3,
         type = 3,
-        size = {14.89,1,4.2},
+        size = {14.89, 1, 4.2},
         debug = false
     })
     local length = #hitTable
-    for i=1,length,1 do
+    for i = 1, length, 1 do
         if hitTable[i].hit_object.getName() == "大萧条" and hitTable[i].hit_object.is_face_down == false then
             GreatDpression = true
             TrueThisTime = true
@@ -140,39 +498,39 @@ function calculateProduction(origin)
     local length = #hitList
 
     -- 计算工人数量
-    for i=1,length,1 do
+    for i = 1, length, 1 do
         if hitList[i].hit_object.type == "Figurine" then
-            worker = worker + 1        
+            worker = worker + 1
         end
     end
     -- 计算自动化
-    automation = automation + repeatAnd_return_times(hitList,"自动化-动力织布",false)
-    automation = automation + repeatAnd_return_times(hitList,"自动化-轧棉机",false)
-    automation = automation + repeatAnd_return_times(hitList,"自动化-高炉",false)
-    automation = automation + repeatAnd_return_times(hitList,"自动化-蒸汽机",false)
+    automation = automation + repeatAnd_return_times(hitList, "自动化-动力织布", false)
+    automation = automation + repeatAnd_return_times(hitList, "自动化-轧棉机", false)
+    automation = automation + repeatAnd_return_times(hitList, "自动化-高炉", false)
+    automation = automation + repeatAnd_return_times(hitList, "自动化-蒸汽机", false)
     -- 计算所有权
-    purple = repeatAnd_return_bool(hitList,"紫色所有")
-    green = repeatAnd_return_bool(hitList,"绿色所有")
-    oranage = repeatAnd_return_bool(hitList,"橙色所有")
-    red = repeatAnd_return_bool(hitList,"工人所有")
+    purple = repeatAnd_return_bool(hitList, "紫色所有")
+    green = repeatAnd_return_bool(hitList, "绿色所有")
+    oranage = repeatAnd_return_bool(hitList, "橙色所有")
+    red = repeatAnd_return_bool(hitList, "工人所有")
     -- 计算罢工数量
-    strike = strike + repeatAnd_return_times(hitList,"罢工")
+    strike = strike + repeatAnd_return_times(hitList, "罢工", nil)
     -- 检查建筑类型
-    factory = repeatAnd_return_bool(hitList,"工厂")
+    factory = repeatAnd_return_bool(hitList, "工厂", nil)
     if factory == false then
-        mill = repeatAnd_return_bool(hitList,"作坊")
+        mill = repeatAnd_return_bool(hitList, "作坊", nil)
     end
     if mill == false then
-        commons = repeatAnd_return_bool(hitList,"自给农场",true)
+        commons = repeatAnd_return_bool(hitList, "自给农场", true)
     end
     if commons == false then
-        fence = repeatAnd_return_bool(hitList,"自给农场",false)
+        fence = repeatAnd_return_bool(hitList, "自给农场", false)
     end
     if fence == false then
-        lab = repeatAnd_return_bool(hitList,"研究实验室")
-    end 
+        lab = repeatAnd_return_bool(hitList, "研究实验室", nil)
+    end
     if lab == false then
-        commune = repeatAnd_return_bool(hitList,"公社")
+        commune = repeatAnd_return_bool(hitList, "公社", nil)
     end
     -- 计算自给农场租金
     if commons == true and worker == 2 then
@@ -181,10 +539,10 @@ function calculateProduction(origin)
     -- 计算围栏产出
     if fence == true then
         if strike > 0 then
-            print("位于土地格",LandSlot,"的围栏由于罢工无法运行。")
+            print("位于土地格", LandSlot, "的围栏由于罢工无法运行。")
         else
             if worker > 1 then
-                print("位于土地格",LandSlot,"的围栏人数过多，请检查并手动计算。")
+                print("位于土地格", LandSlot, "的围栏人数过多，请检查并手动计算。")
             else
                 if worker + automation == 1 then
                     if GreatDpression == true then
@@ -194,7 +552,7 @@ function calculateProduction(origin)
                     end
                 else
                     if worker < 1 then
-                        print("位于土地格",LandSlot,"的围栏人数不足，请检查并手动计算。")
+                        print("位于土地格", LandSlot, "的围栏人数不足，请检查并手动计算。")
                     end
                 end
             end
@@ -203,10 +561,10 @@ function calculateProduction(origin)
     -- 计算工厂产出
     if factory == true then
         if strike > 0 then
-            print("位于土地格",LandSlot,"的工厂由于罢工无法运行。")
+            print("位于土地格", LandSlot, "的工厂由于罢工无法运行。")
         else
             if worker + automation > 3 then
-                print("位于土地格",LandSlot,"的工厂人数过多，请检查并手动计算。")
+                print("位于土地格", LandSlot, "的工厂人数过多，请检查并手动计算。")
             else
                 if worker + automation == 3 then
                     if GreatDpression == true then
@@ -216,7 +574,7 @@ function calculateProduction(origin)
                     end
                 else
                     if worker + automation < 3 then
-                        print("位于土地格",LandSlot,"的工厂人数不足，请检查并手动计算。")
+                        print("位于土地格", LandSlot, "的工厂人数不足，请检查并手动计算。")
                     end
                 end
             end
@@ -225,10 +583,10 @@ function calculateProduction(origin)
     -- 计算作坊产出
     if mill == true then
         if strike > 0 then
-            print("位于土地格",LandSlot,"的作坊由于罢工无法运行。")
+            print("位于土地格", LandSlot, "的作坊由于罢工无法运行。")
         else
             if worker + automation > 2 then
-                print("位于土地格",LandSlot,"的作坊人数过多，请检查并手动计算。")
+                print("位于土地格", LandSlot, "的作坊人数过多，请检查并手动计算。")
             else
                 if worker + automation == 2 then
                     if GreatDpression == true then
@@ -243,78 +601,78 @@ function calculateProduction(origin)
     -- 给予盈余
     if purple == true then
         if factory == true then
-            giveResourcesTo(Earn,"purple")
-            print("紫色玩家通过位于土地格",LandSlot,"的工厂获得了",Earn,"资源")
+            giveResourcesTo(Earn, "purple")
+            print("紫色玩家通过位于土地格", LandSlot, "的工厂获得了", Earn, "资源")
         else
             if mill == true then
-                giveResourcesTo(Earn,"purple")
-            print("紫色玩家通过位于土地格",LandSlot,"的作坊获得了",Earn,"资源")
+                giveResourcesTo(Earn, "purple")
+                print("紫色玩家通过位于土地格", LandSlot, "的作坊获得了", Earn, "资源")
             else
                 if fence == true then
-                    giveResourcesTo(Earn,"purple")
-                    print("紫色玩家通过位于土地格",LandSlot,"的农场获得了",Earn,"资源")
+                    giveResourcesTo(Earn, "purple")
+                    print("紫色玩家通过位于土地格", LandSlot, "的农场获得了", Earn, "资源")
                 end
             end
         end
-       
+
     end
-    if green == true  then
+    if green == true then
         if factory == true then
-            giveResourcesTo(Earn,"green")
-            print("绿色玩家通过位于土地格",LandSlot,"的工厂获得了",Earn,"资源")
+            giveResourcesTo(Earn, "green")
+            print("绿色玩家通过位于土地格", LandSlot, "的工厂获得了", Earn, "资源")
         else
             if mill == true then
-                giveResourcesTo(Earn,"green")
-                print("绿色玩家通过位于土地格",LandSlot,"的作坊获得了",Earn,"资源")
+                giveResourcesTo(Earn, "green")
+                print("绿色玩家通过位于土地格", LandSlot, "的作坊获得了", Earn, "资源")
             else
                 if fence == true then
-                    giveResourcesTo(Earn,"green")
-                    print("紫色玩家通过位于土地格",LandSlot,"的农场获得了",Earn,"资源")
+                    giveResourcesTo(Earn, "green")
+                    print("紫色玩家通过位于土地格", LandSlot, "的农场获得了", Earn, "资源")
                 end
             end
         end
-        
+
     end
     if oranage == true then
         if factory == true then
-            giveResourcesTo(Earn,"oranage")
-            print("橙色玩家通过位于土地格",LandSlot,"的工厂获得了",Earn,"资源")
+            giveResourcesTo(Earn, "oranage")
+            print("橙色玩家通过位于土地格", LandSlot, "的工厂获得了", Earn, "资源")
         else
             if mill == true then
-                giveResourcesTo(Earn,"oranage")
-                print("橙色玩家通过位于土地格",LandSlot,"的作坊获得了",Earn,"资源")
+                giveResourcesTo(Earn, "oranage")
+                print("橙色玩家通过位于土地格", LandSlot, "的作坊获得了", Earn, "资源")
             else
                 if fence == true then
-                    giveResourcesTo(Earn,"oranage")
-                    print("紫色玩家通过位于土地格",LandSlot,"的农场获得了",Earn,"资源")
+                    giveResourcesTo(Earn, "oranage")
+                    print("紫色玩家通过位于土地格", LandSlot, "的农场获得了", Earn, "资源")
                 end
             end
         end
-       
+
     end
     if red == true then
         if factory == true then
-            giveResourcesTo(Earn,"red")
-            print("工人玩家通过位于土地格",LandSlot,"的工厂获得了",Earn,"资源")
+            giveResourcesTo(Earn, "red")
+            print("工人玩家通过位于土地格", LandSlot, "的工厂获得了", Earn, "资源")
         else
             if mill == true then
-                giveResourcesTo(Earn,"red")
-                print("工人玩家通过位于土地格",LandSlot,"的作坊获得了",Earn,"资源")
+                giveResourcesTo(Earn, "red")
+                print("工人玩家通过位于土地格", LandSlot, "的作坊获得了", Earn, "资源")
             else
                 if fence == true then
-                    giveResourcesTo(Earn,"red")
-                    print("紫色玩家通过位于土地格",LandSlot,"的农场获得了",Earn,"资源")
+                    giveResourcesTo(Earn, "red")
+                    print("紫色玩家通过位于土地格", LandSlot, "的农场获得了", Earn, "资源")
                 end
             end
         end
     end
 
-    LandSlot = LandSlot+1
+    LandSlot = LandSlot + 1
 end
 
-function giveResourcesTo(resourcesNumber,destination)
+function giveResourcesTo(resourcesNumber, destination)
     if destination == "purple" then
-        for i=1,resourcesNumber,1 do
+        for i = 1, resourcesNumber, 1 do
             ResourcesBag.takeObject({
                 position = {2.63, 2.99, 6.15},
                 smooth = false
@@ -322,7 +680,7 @@ function giveResourcesTo(resourcesNumber,destination)
         end
     end
     if destination == "green" then
-        for i=1,resourcesNumber,1 do
+        for i = 1, resourcesNumber, 1 do
             ResourcesBag.takeObject({
                 position = {6.21, 2.49, 7.07},
                 smooth = false
@@ -330,7 +688,7 @@ function giveResourcesTo(resourcesNumber,destination)
         end
     end
     if destination == "orange" then
-        for i=1,resourcesNumber,1 do
+        for i = 1, resourcesNumber, 1 do
             ResourcesBag.takeObject({
                 position = {10.13, 2.48, 6.86},
                 smooth = false
@@ -338,7 +696,7 @@ function giveResourcesTo(resourcesNumber,destination)
         end
     end
     if destination == "red" then
-        for i=1,resourcesNumber,1 do
+        for i = 1, resourcesNumber, 1 do
             ResourcesBag.takeObject({
                 position = {12.13, 2.48, -5.19},
                 smooth = false
@@ -347,18 +705,18 @@ function giveResourcesTo(resourcesNumber,destination)
     end
 end
 
-function repeatAnd_return_bool(hitList,Name,faceDown)
+function repeatAnd_return_bool(hitList, Name, faceDown)
     local returnBool = false
     local length = #hitList
     if faceDown == nil then
-        for i=1,length,1 do
+        for i = 1, length, 1 do
             if hitList[i].hit_object.getName() == Name then
                 returnBool = true
                 break
             end
         end
     else
-        for i=1,length,1 do
+        for i = 1, length, 1 do
             if hitList[i].hit_object.getName() == Name and hitList[i].hit_object.is_face_down == faceDown then
                 returnBool = true
                 break
@@ -368,17 +726,17 @@ function repeatAnd_return_bool(hitList,Name,faceDown)
     return returnBool
 end
 
-function repeatAnd_return_times(hitList,Name,faceDown)
+function repeatAnd_return_times(hitList, Name, faceDown)
     local showTimes = 0
     local length = #hitList
     if faceDown == nil then
-        for i=1,length,1 do
+        for i = 1, length, 1 do
             if hitList[i].hit_object.getName() == Name then
                 showTimes = showTimes + 1
             end
         end
     else
-        for i=1,length,1 do
+        for i = 1, length, 1 do
             if hitList[i].hit_object.getName() == Name and hitList[i].hit_object.is_face_down == faceDown then
                 showTimes = showTimes + 1
             end
@@ -419,10 +777,10 @@ function setPhaseMarker()
 end
 
 function flipPolicyDecks()
-    Policy_Deck_Top_Left = findHitsInRadius({15.39, 4, 6.02}, 0.5)[1].hit_object
-    Policy_Deck_Top_Right = findHitsInRadius({17.98, 4, 6.04}, 0.5)[1].hit_object
-    Policy_Deck_Buttom_Left = findHitsInRadius({15.37, 4, 2.62}, 0.5)[1].hit_object
-    Policy_Deck_Buttom_Right = findHitsInRadius({17.95, 4, 2.62}, 0.5)[1].hit_object
+    Policy_Deck_Top_Left = findHitsInRay({15.39, 4, 6.02})[1].hit_object
+    Policy_Deck_Top_Right = findHitsInRay({17.98, 4, 6.04})[1].hit_object
+    Policy_Deck_Buttom_Left = findHitsInRay({15.37, 4, 2.62})[1].hit_object
+    Policy_Deck_Buttom_Right = findHitsInRay({17.95, 4, 2.62})[1].hit_object
 
     if (Policy_Deck_Top_Left == customBoard and Policy_Deck_Top_Right == customBoard and Policy_Deck_Buttom_Left ==
         customBoard and Policy_Deck_Buttom_Right == customBoard) then
@@ -447,48 +805,16 @@ function flipPolicyDecks()
     end
 end
 
-function findHitsInRadius(pos, radius)
-    local radius = (radius or 1)
+function findHitsInRay(pos)
     local hitList = Physics.cast({
         origin = pos,
-        type = 2,
-        direction = {0, -10, 0},
-        size = {radius, radius, radius},
-        max_distance = 1,
-        debug = flase
+        type = 1,
+        direction = {0, -1, 0},
+        max_distance = 5,
+        debug = false
     })
 
     return hitList
-end
-
-function getObject()
-    Policy_Cards_Era_1 = getObjectFromGUID("5d498b")
-    Policy_Cards_Era_2 = getObjectFromGUID("5a70b5")
-    Policy_Cards_Era_3 = getObjectFromGUID("aa9449")
-    Policy_Cards_Crisis = getObjectFromGUID("431a3f")
-    Party_Deck = getObjectFromGUID("1aa22c")
-    Charactor_Deck = getObjectFromGUID("f1cf9b")
-    Commodity_Deck = getObjectFromGUID("34e9f6")
-    Innovation_Deck = getObjectFromGUID("369161")
-    Prime_Debt_Deck = getObjectFromGUID("16a2cb")
-    Subprime_Debt_Deck = getObjectFromGUID("9571c5")
-    ColonyCrisis = getObjectFromGUID("5ae390")
-    colonyA = getObjectFromGUID("37730a")
-    colonyB = getObjectFromGUID("df262f")
-    colonyC = getObjectFromGUID("88e0f3")
-    Crisis_Card_Great_Depression = getObjectFromGUID("4c6eaf")
-
-    setupButtonToBe = getObjectFromGUID("66a0bc")
-    testButtonToBe = getObjectFromGUID("507453")
-    calProductionButtonToBe = getObjectFromGUID("d5d57a")
-
-    flipPolicyDecksButtonToBe = getObjectFromGUID("d32217")
-    customBoard = getObjectFromGUID("541194")
-    PhaseMarker = getObjectFromGUID("ed95e3")
-    nextPhaseButtonToBe = getObjectFromGUID("17a99e")
-
-    ResourcesBag = getObjectFromGUID("6a37ad")
-
 end
 
 function setup()
@@ -497,12 +823,13 @@ function setup()
     Wait.frames(policySetup2, 1)
     Wait.frames(policySetup3, 2)
 
-    flipAndShuffle(Party_Deck)
+    flipAndShuffle(Red_Charactor_Deck)
     flipAndShuffle(Charactor_Deck)
     flipAndShuffle(Innovation_Deck)
     flipAndShuffle(Commodity_Deck)
     flipAndShuffle(Prime_Debt_Deck)
     flipAndShuffle(Subprime_Debt_Deck)
+    flipAndShuffle(Party_Deck)
 
     colonySetup()
 
