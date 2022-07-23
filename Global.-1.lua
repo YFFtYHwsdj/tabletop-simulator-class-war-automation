@@ -91,6 +91,8 @@ function initialization()
 
     Class_Conciousness_Value = 0
     Innovation_Value = 0
+    Solidarity_Value = 1
+    PartyCardsDealt = 0
 
     OriginSlot1 = {-11.32, 2.53, 6.01}
     OriginSlot2 = {-8.90, 2.52, 6.04}
@@ -112,7 +114,7 @@ function checkForPolicyCard(CardName)
         direction = {0, -1, 0},
         max_distance = 5,
         type = 3,
-        debug = true
+        debug = false
     })
     for i = 1, #hitList do
         if hitList[i].hit_object.getName() == CardName then
@@ -124,7 +126,8 @@ end
 
 function calReproduction()
     local death = 0
-    
+    local proletarianized = 0
+
     TaxSurplus = 0
     WageSurplus = 0
     RentSurplus = 0
@@ -136,48 +139,81 @@ function calReproduction()
     calClergyNunmbers()
     calNobilityNunmbers()
 
+    workerNumber = calculateWorkers()
+
     if nobleNum <= RentSurplus then
         RentSurplus = RentSurplus - nobleNum
     else
+        print(nobleNum - RentSurplus, "个贵族棋子无法承受繁育花费，成为无产阶级。")
+        proletarianized = nobleNum - RentSurplus
         nobleNum = RentSurplus
         RentSurplus = 0
+        setNoble(nobleNum)
+    end
+
+    if clergyNum <= RentSurplus then
+        RentSurplus = RentSurplus - clergyNum
+    else
+        if checkForPolicyCard("国教") then
+            if TaxSurplus + RentSurplus >= clergyNum then
+                TaxSurplus = TaxSurplus - RentSurplus - clergyNum
+                RentSurplus = 0
+            else
+                print(clergyNum - RentSurplus - TaxSurplus,
+                    "个教士棋子无法承受繁育花费，成为无产阶级。")
+                proletarianized = clergyNum - RentSurplus - TaxSurplus
+                RentSurplus = 0
+                TaxSurplus = 0
+                setClergy(clergyNum)
+            end
+        else
+            if clergyNum <= RentSurplus then
+                RentSurplus = RentSurplus - clergyNum
+            else
+                print(clergyNum - RentSurplus, "个贵族棋子无法承受繁育花费，成为无产阶级。")
+                proletarianized = clergyNum - RentSurplus
+                clergyNum = RentSurplus
+                RentSurplus = 0
+                setClergy(clergyNum)
+            end
+        end
     end
 
     setRentSurplus(RentSurplus)
-    setNoble(nobleNum)
-
-    workerNumber = calculateWorkers()
 
     if workerNumber <= WageSurplus then
         WageSurplus = WageSurplus - workerNumber
         setWageSurplus(WageSurplus)
-        setWorkers(workerNumber + 2)
-        print("本次繁育阶段，没有一个工人饿死。")
+        setWorkers(workerNumber + proletarianized + 2)
+        print("本次繁育阶段，没有一个无产阶级饿死。")
     else
         if checkForPolicyCard("福利国家") then
-            if TaxSurplus + WageSurplus >= workerNumber  then
+            if TaxSurplus + WageSurplus >= workerNumber then
                 WageSurplus = 0
                 setWageSurplus(WageSurplus)
                 TaxSurplus = TaxSurplus - WageSurplus - workerNumber
-                setTaxSurplus(TaxSurplus)
                 setWorkers(workerNumber + 2)
             else
                 death = workerNumber - TaxSurplus - WageSurplus
                 WageSurplus = 0
                 setWageSurplus(WageSurplus)
                 TaxSurplus = 0
-                setTaxSurplus(TaxSurplus)
-                setWorkers(workerNumber - death + 1)
-                print("本次繁育阶段中，共计",death,"个工人棋子死亡，请移除",death - 1,"个棋子。")
+                setWorkers(workerNumber - death + 1 + proletarianized)
+                print("本次繁育阶段中，共计", death, "个工人棋子死亡，请移除", death - 1,
+                    "个棋子。")
             end
         else
             death = workerNumber - WageSurplus
             WageSurplus = 0
             setWageSurplus(WageSurplus)
-            setWorkers(workerNumber - death + 1)
-            print("本次繁育阶段中，共计",death,"个工人棋子死亡。")
+            setWorkers(workerNumber - death + 1 + proletarianized)
+            print("本次繁育阶段中，共计", death, "个工人棋子死亡。")
         end
-    end 
+    end
+
+    setTaxSurplus(TaxSurplus)
+
+    print("贵族、教士、无产阶级的繁结算完成，其余部分尚未开发，请")
 end
 
 function calClergyNunmbers()
@@ -193,6 +229,7 @@ function calClergyNunmbers()
             end
         end
     end
+    clergyNum = redClergy + neutralClergy
 end
 
 function calNobilityNunmbers()
@@ -203,56 +240,104 @@ function calNobilityNunmbers()
             nobleNum = nobleNum + 1
         end
     end
+    return nobleNum
 end
 
 function setNoble(Numbers)
     local gap = 0
-    if nobleNum < Numbers then
-        for i=1,#hitNobility do
-            if hitNobility[i].hit_object.type == "Figurine" then
-                destroyObject(hitNobility[i].hit_object)
-            end
+    for i = 1, #hitNobility do
+        if hitNobility[i].hit_object.type == "Figurine" then
+            destroyObject(hitNobility[i].hit_object)
         end
-        for i=0,Numbers do
-            NeuralMelee_Bag.takeObject({
-                position = {0.80+gap, 2.50, 1.00}
-            })
-            gap = gap + 0.6
-        end
+    end
+    for i = 1, Numbers do
+        NeuralMelee_Bag.takeObject({
+            position = {0.80 + gap, 2.50, 1.00}
+        })
+        gap = gap + 0.6
     end
 end
 
-
+function setClergy(Numbers)
+    local redNum = redClergy
+    local blackNum = neutralClergy
+    local gap = 0
+    local up = 0
+    for i = 1, #hitClergy do
+        if hitClergy[i].hit_object.type == "Figurine" then
+            destroyObject(hitClergy[i].hit_object)
+        end
+    end
+    if blackNum >= Numbers then
+        for i = 1, Numbers do
+            NeuralMelee_Bag.takeObject({
+                position = {-3.39 + gap, 2.50, 0.75 + up},
+                smooth = false
+            })
+            if gap <= 2.4 then
+                gap = gap + 0.6
+            else
+                gap = 0
+                up = up + 0.6
+            end
+        end
+    else
+        for i = 1, blackNum do
+            NeuralMelee_Bag.takeObject({
+                position = {-3.39 + gap, 2.50, 0.75 + up},
+                smooth = false
+            })
+            if gap <= 2.4 then
+                gap = gap + 0.6
+            else
+                gap = 0
+                up = up + 0.6
+            end
+        end
+        for i = 1, Numbers - blackNum do
+            RedMelee_Bag.takeObject({
+                position = {-3.39 + gap, 2.50, 0.75 + up},
+                smooth = false
+            })
+            if gap <= 2.4 then
+                gap = gap + 0.6
+            else
+                gap = 0
+                up = up + 0.6
+            end
+        end
+    end
+end
 
 function setWorkers(Numbers)
     local RedWorkers = 0
     local NeutralWokers = 0
     local gap = 0.8
-    for i=1,#WorkerZone do
+    for i = 1, #WorkerZone do
         if WorkerZone[i].hit_object.getName() == "红色棋子" or WorkerZone[i].hit_object.getName() == "黑色棋子" then
             destroyObject(WorkerZone[i].hit_object)
         end
     end
-    for i=1,#WorkerZone do
+    for i = 1, #WorkerZone do
         if WorkerZone[i].hit_object.getName() == "红色棋子" then
             RedWorkers = RedWorkers + 1
         else
             if WorkerZone[i].hit_object.getName() == "黑色棋子" then
                 NeutralWokers = NeutralWokers + 1
-            end            
+            end
         end
     end
     if Numbers >= RedWorkers + NeutralWokers then
-        for i=1,RedWorkers do
+        for i = 1, RedWorkers do
             RedMelee_Bag.takeObject({
-                position = {-7.32+gap, 2.51, -6.94},
+                position = {-7.32 + gap, 2.51, -6.94},
                 smooth = false
             })
             gap = gap + 0.8
         end
-        for i=1,Numbers - RedWorkers do
+        for i = 1, Numbers - RedWorkers do
             NeuralMelee_Bag.takeObject({
-                position = {-7.32+gap, 2.51, -6.94},
+                position = {-7.32 + gap, 2.51, -6.94},
                 smooth = false
             })
             gap = gap + 0.8
@@ -260,24 +345,24 @@ function setWorkers(Numbers)
     end
     if Numbers < RedWorkers + NeutralWokers then
         if Numbers <= RedWorkers then
-            for i=1,Numbers do
+            for i = 1, Numbers do
                 RedMelee_Bag.takeObject({
-                    position = {-7.32+gap, 2.51, -6.94},
+                    position = {-7.32 + gap, 2.51, -6.94},
                     smooth = false
                 })
                 gap = gap + 0.8
             end
         else
-            for i=1,RedWorkers do
+            for i = 1, RedWorkers do
                 RedMelee_Bag.takeObject({
-                    position = {-7.32+gap, 2.51, -6.94},
+                    position = {-7.32 + gap, 2.51, -6.94},
                     smooth = false
                 })
                 gap = gap + 0.8
             end
-            for i=1,Numbers - RedWorkers do
+            for i = 1, Numbers - RedWorkers do
                 NeuralMelee_Bag.takeObject({
-                    position = {-7.32+gap, 2.51, -6.94},
+                    position = {-7.32 + gap, 2.51, -6.94},
                     smooth = false
                 })
                 gap = gap + 0.8
@@ -292,7 +377,7 @@ function setWageSurplus(WageSurplus)
             destroyObject(WageHit[i].hit_object)
         end
     end
-    for i = 0, WageSurplus do
+    for i = 1, WageSurplus do
         ResourcesBag.takeObject({
             position = {10.07, 2.48, -6.35},
             smooth = false
@@ -306,7 +391,7 @@ function setTaxSurplus(TaxSurplus)
             destroyObject(TaxHit[i].hit_object)
         end
     end
-    for i = 0, TaxSurplus do
+    for i = 1, TaxSurplus do
         ResourcesBag.takeObject({
             position = {7.70, 2.48, -2.87},
             smooth = false
@@ -320,7 +405,7 @@ function setRentSurplus(RentSurplus)
             destroyObject(RentHit[i].hit_object)
         end
     end
-    for i = 0, RentSurplus do
+    for i = 1, RentSurplus do
         ResourcesBag.takeObject({
             position = {5.68, 2.49, 1.10},
             smooth = false
@@ -477,6 +562,29 @@ function calculateMelleAction()
     calculateSolidarity()
     calculateClergy()
     calculateIntelligentsia()
+    nobleAction()
+    print("工人、贵族、教士、知识分子的行动结算完毕，其余行动请自行结算。")
+end
+
+function nobleAction()
+    local proletarianized = 0
+    RentSurplus = 0
+    calRentSurplus()
+    nobleNum = 0
+    calNobilityNunmbers()
+    workerNumber = calculateWorkers()
+    if nobleNum <= RentSurplus then
+        RentSurplus = RentSurplus - nobleNum
+    else
+        print(nobleNum - RentSurplus,
+            "个贵族棋子无法承担奢侈的消费，在人们的议论中沦为无产阶级。")
+        proletarianized = nobleNum - RentSurplus
+        nobleNum = RentSurplus
+        RentSurplus = 0
+        setNoble(nobleNum)
+    end
+    setRentSurplus(RentSurplus)
+    setWorkers(workerNumber + proletarianized)
 end
 
 function calculateIntelligentsia()
@@ -491,16 +599,9 @@ function calculateIntelligentsia()
             if hitList[i].hit_object.getName() == "红色棋子" then
                 CC_add = CC_add + 1
             else
-                if hitList[i].hit_object.getName() == "紫色棋子" then
+                if hitList[i].hit_object.getName() == "紫色棋子" or hitList[i].hit_object.getName() ==
+                    "绿色棋子" or hitList[i].hit_object.getName() == "橙色棋子" then
                     CC_add = CC_add - 1
-                else
-                    if hitList[i].hit_object.getName() == "紫色棋子" then
-                        CC_add = CC_add - 1
-                    else
-                        if hitList[i].hit_object.getName() == "紫色棋子" then
-                            CC_add = CC_add - 1
-                        end
-                    end
                 end
             end
         end
@@ -509,7 +610,9 @@ function calculateIntelligentsia()
     Innovation_Value = Innovation_Value + InnovationAdd
     setInnovationSpinner(Innovation_Value)
 
-    checkForInnovation()
+    if InnovationAdd > 0 then
+        checkForInnovation()
+    end
 
     Class_Conciousness_Value = Class_Conciousness_Value + CC_add
     setClassSpinner(Class_Conciousness_Value)
@@ -679,7 +782,6 @@ function calculateSolidarity()
         end
     end
 
-    local Solidarity_Value = Solidarity_Dice.getRotationValue()
     Solidarity_Value = Solidarity_Value + redWorkers
     while Solidarity_Value >= 8 and PartyCardsDealt < 10 do
         Solidarity_Value = Solidarity_Value - 7
@@ -688,6 +790,7 @@ function calculateSolidarity()
     end
     if PartyCardsDealt == 9 then
         print("请手动抽出最后一张政党牌！")
+        PartyCardsDealt = PartyCardsDealt + 1
     end
     Solidarity_Dice.setRotationValue(Solidarity_Value)
 end
@@ -1014,25 +1117,33 @@ end
 function setPhaseMarker()
     if Phases % 7 == 1 then
         PhaseMarker.setPositionSmooth({26.43, 1.48, -19.47})
+        print("现在是政治阶段，请移步政治市场。")
     else
         if Phases % 7 == 2 then
             PhaseMarker.setPositionSmooth({26.31, 1.48, -20.71})
+            print("现在是劳工阶段，请到人才市场进行劳动力招聘。")
         else
             if Phases % 7 == 3 then
                 PhaseMarker.setPositionSmooth({26.20, 1.48, -21.84})
+                print(
+                    "现在是生产阶段，请在资产卡上摆放好棋子与标记，然后点击结算生产按钮。")
             else
                 if Phases % 7 == 4 then
                     PhaseMarker.setPositionSmooth({26.21, 1.48, -22.97})
+                    print("现在是投资阶段，请移步投资市场。")
                 else
                     if Phases % 7 == 5 then
                         PhaseMarker.setPositionSmooth({26.24, 1.48, -24.06})
+                        print("现在是支出阶段，请自行计算支出。")
                     else
                         if Phases % 7 == 6 then
                             PhaseMarker.setPositionSmooth({26.32, 1.48, -25.31})
+                            print("现在是繁育阶段，请摆放好棋子与资源，点击繁育结算按钮。")
                         else
                             if Phases % 7 == 0 then
                                 PhaseMarker.setPositionSmooth({26.39, 1.48, -26.38})
                             end
+                            print("现在是行动阶段，请摆放好棋子与资源，点击棋子行动按钮。")
                         end
                     end
                 end
