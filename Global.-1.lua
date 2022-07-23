@@ -953,6 +953,37 @@ function calculateProduction(origin)
             end
         end
     end
+    -- 计算研究实验室
+    if lab == true then
+        if worker + automation > 1 then
+            print("位于土地格", LandSlot, "的研究实验室人数过多，请检查并手动计算。")
+        else
+            if condition then
+                Innovation_Value = Innovation_Value + 1
+                setInnovationSpinner(Innovation_Value)
+                checkForInnovation()
+            else
+                print("位于土地格", LandSlot, "的研究实验室人数不足，请检查并手动计算。")
+            end
+        end
+    end
+    --计算公社产出
+    if commons == true then
+        red = true
+        if worker + automation > 2 then
+            print("位于土地格", LandSlot, "的公社人数过多，请检查并手动计算。")
+        else
+            if worker + automation == 2 then
+                if GreatDpression == true then
+                    Earn = 5
+                else
+                    Earn = 6
+                end
+            else
+                print("位于土地格", LandSlot, "的公社人数不足，请检查并手动计算。")
+            end
+        end
+    end
     -- 计算作坊产出
     if mill == true then
         if worker + automation > 2 then
@@ -964,6 +995,8 @@ function calculateProduction(origin)
                 else
                     Earn = 6
                 end
+            else
+                print("位于土地格", LandSlot, "的作坊人数不足，请检查并手动计算。")
             end
         end
     end
