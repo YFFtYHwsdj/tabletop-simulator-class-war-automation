@@ -802,7 +802,7 @@ end
 function calProduction()
     CommonsRent = 0
     LandSlot = 1
-    checkForDeppression()
+    checkForCrisis()
     calculateProduction(OriginSlot1)
     calculateProduction(OriginSlot2)
     calculateProduction(OriginSlot3)
@@ -834,8 +834,9 @@ function calProduction()
 
 end
 
-function checkForDeppression()
-    local TrueThisTime = false
+function checkForCrisis()
+    GreatDpression = false
+    Pollution = false
     local hitTable = Physics.cast({
         origin = {-0.04, 3.09, 18.69},
         direction = {0, -1, 0},
@@ -848,12 +849,12 @@ function checkForDeppression()
     for i = 1, length, 1 do
         if hitTable[i].hit_object.getName() == "大萧条" and hitTable[i].hit_object.is_face_down == false then
             GreatDpression = true
-            TrueThisTime = true
-            break
         end
     end
-    if TrueThisTime == false then
-        GreatDpression = false
+    for i = 1, length, 1 do
+        if hitTable[i].hit_object.getName() == "环境污染" and hitTable[i].hit_object.is_face_down == false then
+            Pollution = true
+        end
     end
 end
 
