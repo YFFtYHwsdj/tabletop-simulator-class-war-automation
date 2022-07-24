@@ -184,8 +184,12 @@ function calReproduction()
     if workerNumber <= WageSurplus then
         WageSurplus = WageSurplus - workerNumber
         setWageSurplus(WageSurplus)
-        setWorkers(workerNumber + proletarianized + 2)
-        print("本次繁育阶段，没有一个无产阶级饿死。")
+        if workerNumber == 0 then
+            setWorkers(proletarianized + 1)
+        else
+            setWorkers(workerNumber + proletarianized + 2)
+            print("本次繁育阶段，没有一个无产阶级饿死。")
+        end
     else
         if checkForPolicyCard("福利国家") then
             if TaxSurplus + WageSurplus >= workerNumber then
@@ -868,6 +872,7 @@ function calculateProduction(origin)
     local commune = false
     local commons = false
     local fence = false
+    local noOwner = false
     local hitList = Physics.cast({
         origin = origin,
         direction = {0, -1, 0},
@@ -917,6 +922,7 @@ function calculateProduction(origin)
     if commons == true and worker == 2 then
         CommonsRent = CommonsRent + 1
     end
+
     -- 计算围栏产出
     if fence == true then
         if worker > 1 then
@@ -958,7 +964,9 @@ function calculateProduction(origin)
         if worker + automation > 1 then
             print("位于土地格", LandSlot, "的研究实验室人数过多，请检查并手动计算。")
         else
-            if condition then
+            if worker + automation == 1 then
+                print("位于土地格", LandSlot,
+                    "的研究实验室增加了1点创新点，并激活了一次创新结算。")
                 Innovation_Value = Innovation_Value + 1
                 setInnovationSpinner(Innovation_Value)
                 checkForInnovation()
@@ -967,7 +975,7 @@ function calculateProduction(origin)
             end
         end
     end
-    --计算公社产出
+    -- 计算公社产出
     if commons == true then
         red = true
         if worker + automation > 2 then
@@ -1067,6 +1075,12 @@ function calculateProduction(origin)
                 end
             end
         end
+    end
+
+    -- 检查是否忘记放置所有制
+    if purple == false and oranage == false and red == false and green == false and commons == false and Earn > 0 or lab ==
+        true then
+        print("位于土地格", LandSlot, "的建筑可能未放置所有制标记，请检查并手动结算。")
     end
 
     LandSlot = LandSlot + 1
@@ -1263,6 +1277,9 @@ function colonySetup()
     ColonyCrisis.takeObject({
         smooth = false
     }).putObject(colonyC)
+    flipAndShuffle(colonyA)
+    flipAndShuffle(colonyB)
+    flipAndShuffle(colonyC)
 end
 
 function policySetup1()
